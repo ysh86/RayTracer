@@ -1,4 +1,5 @@
 #include <vector>
+#include <random>
 #include <float.h>
 
 #include "ppm.h"
@@ -6,6 +7,7 @@
 #include "ray.h"
 #include "hitable.h"
 #include "sphere.h"
+#include "camera.h"
 
 inline vec3 color(const ray& r, hitable* world)
 {
@@ -26,25 +28,27 @@ int main()
 {
     const int nx = 128;
     const int ny = 64;
+    const int ns = 100;
+    std::mt19937 gen(0);
+    std::uniform_real_distribution<float> distr(0.0f, 1.0f);
 
-    std::vector<hitable*> list = {
+    hitable* world = new hitable_list({
         new sphere(vec3(0, 0, -1), 0.5f),
         new sphere(vec3(0, -100.5f, -1), 100),
-    };
-    hitable* world = new hitable_list(std::move(list));
+    });
+    camera cam;
 
-    ppm_out(nx, ny, [nx, ny, world](int i, int j) {
-        const vec3 lower_left_corner(-2.0f, -1.0f, -1.0f);
-        const vec3 horizontal(4.0f, 0.0f, 0.0f);
-        const vec3 vertical(0.0f, 2.0f, 0.0f);
-        const vec3 origin(0.0f, 0.0f, 0.0f);
+    ppm_out(nx, ny, [nx, ny, ns, &gen, &distr, &world, &cam](int i, int j) {
+        vec3 col(0, 0, 0);
+        for (int s = 0; s < ns; ++s) {
+            float u = float(i + distr(gen)) / float(nx);
+            float v = float(j + distr(gen)) / float(ny);
 
-        float u = float(i) / float(nx);
-        float v = float(j) / float(ny);
-        ray r(origin, lower_left_corner + horizontal * u + vertical * v);
-        
-        //vec3 p = r.point_at_parameter(2.0);
-        return color(r, world);
+            ray r = cam.get_ray(u, v);
+            //vec3 p = r.point_at_parameter(2.0);
+            col += color(r, world);
+        }
+        return col / float(ns);
     });
 
     return 0;
