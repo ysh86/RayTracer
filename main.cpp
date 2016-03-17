@@ -9,12 +9,23 @@
 #include "sphere.h"
 #include "camera.h"
 
-inline vec3 color(const ray& r, hitable* world)
+
+inline vec3 random_in_unit_sphere(std::mt19937& gen, std::uniform_real_distribution<float>& distr)
+{
+    vec3 p;
+    do {
+        p = vec3(distr(gen), distr(gen), distr(gen)) * 2.0f - vec3(1, 1, 1);
+    } while (p.squared_length() >= 1.0f);
+    return p;
+}
+
+inline vec3 color(const ray& r, hitable* world, std::mt19937& gen, std::uniform_real_distribution<float>& distr)
 {
     hit_record rec;
     if (world->hit(r, 0.0f, FLT_MAX, rec)) {
-        // Surface normal
-        return vec3(rec.normal.x() + 1, rec.normal.y() + 1, rec.normal.z() + 1) * 0.5f;
+        // diffuse
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere(gen, distr);
+        return color(ray(rec.p, target - rec.p), world, gen, distr) * 0.5f;
     }
     else {
         // Blue sky
@@ -46,9 +57,11 @@ int main()
 
             ray r = cam.get_ray(u, v);
             //vec3 p = r.point_at_parameter(2.0);
-            col += color(r, world);
+            col += color(r, world, gen, distr);
         }
-        return col / float(ns);
+        col /= float(ns);
+        col = vec3(sqrt(col.r()), sqrt(col.g()), sqrt(col.b())); // gamma 2
+        return col;
     });
 
     return 0;
