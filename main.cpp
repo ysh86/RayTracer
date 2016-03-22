@@ -8,24 +8,21 @@
 #include "hitable.h"
 #include "sphere.h"
 #include "camera.h"
+#include "material.h"
 
 
-inline vec3 random_in_unit_sphere(std::mt19937& gen, std::uniform_real_distribution<float>& distr)
-{
-    vec3 p;
-    do {
-        p = vec3(distr(gen), distr(gen), distr(gen)) * 2.0f - vec3(1, 1, 1);
-    } while (p.squared_length() >= 1.0f);
-    return p;
-}
-
-inline vec3 color(const ray& r, hitable* world, std::mt19937& gen, std::uniform_real_distribution<float>& distr)
+inline vec3 color(const ray& r, hitable* world, int depth)
 {
     hit_record rec;
-    if (world->hit(r, 0.0f, FLT_MAX, rec)) {
-        // diffuse
-        vec3 target = rec.p + rec.normal + random_in_unit_sphere(gen, distr);
-        return color(ray(rec.p, target - rec.p), world, gen, distr) * 0.5f;
+    if (world->hit(r, 0.001f, FLT_MAX, rec)) {
+        ray scattered;
+        vec3 attenuation;
+        if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+            return attenuation * color(scattered, world, depth + 1);
+        }
+        else {
+            return vec3(0, 0, 0);
+        }
     }
     else {
         // Blue sky
@@ -37,15 +34,17 @@ inline vec3 color(const ray& r, hitable* world, std::mt19937& gen, std::uniform_
 
 int main()
 {
-    const int nx = 128;
-    const int ny = 64;
+    const int nx = 128;// *10;
+    const int ny = 64;// *10;
     const int ns = 100;
     std::mt19937 gen(0);
     std::uniform_real_distribution<float> distr(0.0f, 1.0f);
 
     hitable* world = new hitable_list({
-        new sphere(vec3(0, 0, -1), 0.5f),
-        new sphere(vec3(0, -100.5f, -1), 100),
+        new sphere(vec3(0, 0, -1), 0.5f, new lambertian(vec3(0.8f, 0.3f, 0.3f), gen, distr)),
+        new sphere(vec3(0, -100.5f, -1), 100, new lambertian(vec3(0.8f, 0.8f, 0.0f), gen, distr)),
+        new sphere(vec3(1, 0, -1), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 1.0f, gen, distr)),
+        new sphere(vec3(-1, 0, -1), 0.5f, new metal(vec3(0.8f, 0.8f, 0.8f), 0.3f, gen, distr)),
     });
     camera cam;
 
@@ -57,7 +56,7 @@ int main()
 
             ray r = cam.get_ray(u, v);
             //vec3 p = r.point_at_parameter(2.0);
-            col += color(r, world, gen, distr);
+            col += color(r, world, 0);
         }
         col /= float(ns);
         col = vec3(sqrt(col.r()), sqrt(col.g()), sqrt(col.b())); // gamma 2
