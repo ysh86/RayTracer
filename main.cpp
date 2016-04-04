@@ -47,7 +47,7 @@ int main()
         new sphere(vec3(-1, 0, -1), 0.5f, new dielectric(1.5f, gen, distr)),
         new sphere(vec3(-1, 0, -1), -0.45f, new dielectric(1.5f, gen, distr)),
     });
-    camera cam;
+    camera cam(vec3(-2,2,1), vec3(0,0,-1), vec3(0,1,0), 20, float(nx) / float(ny));
 
     ppm_out(nx, ny, [nx, ny, ns, &gen, &distr, &world, &cam](int i, int j) {
         vec3 col(0, 0, 0);
