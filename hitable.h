@@ -27,6 +27,7 @@ class hitable_list : public hitable
 public:
     hitable_list() {}
     hitable_list(std::initializer_list<hitable*> l) : list(l) {}
+    hitable_list(size_t n) : list(n) {}
     virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const;
 
     std::vector<hitable*> list;
@@ -39,7 +40,7 @@ bool hitable_list::hit(const ray& r, float t_min, float t_max, hit_record& rec) 
     float closest_so_far = t_max;
 
     for (auto i : list) {
-        if (i->hit(r, t_min, closest_so_far, temp_rec)) {
+        if (i != nullptr && i->hit(r, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;
