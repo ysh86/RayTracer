@@ -101,7 +101,9 @@ public:
         if (vec3::dot(r_in.direction(), rec.normal) > 0) {
             outward_normal = -rec.normal;
             ni_over_nt = ref_idx;
-            cosine = ref_idx * vec3::dot(r_in.direction(), rec.normal) / r_in.direction().length();
+            //cosine = ref_idx * vec3::dot(r_in.direction(), rec.normal) / r_in.direction().length();
+            cosine = vec3::dot(r_in.direction(), rec.normal) / r_in.direction().length();
+            cosine = sqrt(1.0f - ref_idx * ref_idx * (1.0f - cosine * cosine));
         }
         else {
             outward_normal = rec.normal;
