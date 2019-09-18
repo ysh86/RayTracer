@@ -2,6 +2,7 @@
 #include <random>
 #include <float.h>
 
+#include "mem.h"
 #include "ppm.h"
 #include "vec3.h"
 #include "ray.h"
@@ -85,7 +86,9 @@ int main()
     float aperture = 0.1f;
     camera cam(lookfrom, lookat, vec3(0,1,0), 30, float(nx) / float(ny), aperture, dist_to_focus, gen, distr);
 
-    ppm_out(nx, ny, [&gen, &distr, &world, &cam](int i, int j) {
+    size_t stride_f3 = nx * 3;
+    float mem_f3[stride_f3 * ny];
+    mem_out(mem_f3, stride_f3, nx, ny, [&](int i, int j) {
         vec3 col(0, 0, 0);
         for (int s = 0; s < ns; ++s) {
             float u = float(i + distr(gen)) / float(nx);
@@ -98,6 +101,15 @@ int main()
         col /= float(ns);
         col = vec3(sqrt(col.r()), sqrt(col.g()), sqrt(col.b())); // gamma 2
         return col;
+    });
+
+    float *p_f3  = mem_f3;
+    ppm_out(nx, ny, [&](int i, int j) {
+        return vec3{
+            p_f3[j * stride_f3 + i * 3 + 0], // R
+            p_f3[j * stride_f3 + i * 3 + 1], // G
+            p_f3[j * stride_f3 + i * 3 + 2], // B
+            };
     });
 
     delete world;
