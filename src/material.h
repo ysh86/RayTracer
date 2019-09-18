@@ -9,6 +9,7 @@
 class material
 {
 public:
+    virtual ~material() {}
     virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const = 0;
 
     static inline vec3 random_in_unit_sphere(std::mt19937& gen, std::uniform_real_distribution<float>& distr)
@@ -48,7 +49,7 @@ class lambertian : public material
 {
 public:
     lambertian(const vec3& a, std::mt19937& g, std::uniform_real_distribution<float>& d) : albedo(a), gen(g), distr(d) {}
-    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const override {
         vec3 target = rec.p + rec.normal + random_in_unit_sphere(gen, distr);
         scattered = ray(rec.p, target - rec.p);
         attenuation = albedo;
@@ -72,7 +73,7 @@ public:
             fuzz = 1;
         }
     }
-    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const override {
         vec3 reflected = reflect(vec3::unit_vector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, reflected + random_in_unit_sphere(gen, distr) * fuzz);
         attenuation = albedo;
@@ -90,12 +91,12 @@ class dielectric : public material
 {
 public:
     dielectric(float ri, std::mt19937& g, std::uniform_real_distribution<float>& d) : ref_idx(ri), gen(g), distr(d) {}
-    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const override {
         vec3 outward_normal;
         vec3 reflected = reflect(r_in.direction(), rec.normal);
         float ni_over_nt;
         attenuation = vec3(1.0f, 1.0f, 1.0f);
-        vec3 refracted;
+        vec3 refracted{0.0f, 0.0f, 0.0f};
         float reflect_prob;
         float cosine;
         if (vec3::dot(r_in.direction(), rec.normal) > 0) {

@@ -18,6 +18,7 @@ struct hit_record
 class hitable
 {
 public:
+    virtual ~hitable() {}
     virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const = 0;
 };
 
@@ -28,7 +29,7 @@ public:
     hitable_list() {}
     hitable_list(std::initializer_list<hitable*> l) : list(l) {}
     hitable_list(size_t n) : list(n) {}
-    virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const;
+    virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const override;
 
     std::vector<hitable*> list;
 };

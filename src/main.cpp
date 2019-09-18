@@ -85,7 +85,7 @@ int main()
     float aperture = 0.1f;
     camera cam(lookfrom, lookat, vec3(0,1,0), 30, float(nx) / float(ny), aperture, dist_to_focus, gen, distr);
 
-    ppm_out(nx, ny, [nx, ny, ns, &gen, &distr, &world, &cam](int i, int j) {
+    ppm_out(nx, ny, [&gen, &distr, &world, &cam](int i, int j) {
         vec3 col(0, 0, 0);
         for (int s = 0; s < ns; ++s) {
             float u = float(i + distr(gen)) / float(nx);
